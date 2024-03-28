@@ -162,8 +162,8 @@ Ajuste=function(par){
 utm = "+proj=utm +zone=21 +south +datum=WGS84"
 extP=extent(c(600000, 601000, 5000000, 5001000))
 
-sal=data.frame(q00=NA, sover=NA, rep=NA, Par=NA, Leslie=NA, DeLury=NA, Zippin=NA, Soquete=NA,
-               No.Leslie=NA, No.DeLury=NA, No.Zippin= NA, D.Soquete=NA)
+sal=data.frame(q00=NA, sover=NA, rep=NA, Par=NA, Leslie=NA, DeLury=NA, Carle=NA, Soquete=NA,
+               No.Leslie=NA, No.DeLury=NA, No.Carle= NA, D.Patch=NA)
 sal=sal[-1,]
 write.table(sal, "SalidaSimu.txt", quote=F, col.names = T, row.names = F, sep="\t", append=F)
 
@@ -208,10 +208,8 @@ start=runif(2, lo, up)
 resu=optim(start, Ajuste, method="L-BFGS-B", lower=lo, upper=up, control=list(maxit=30000))
   
 write.table(data.frame(q00=q00, sover=sover, rep=rep, Par=Efi, Leslie=median(el), DeLury=median(ed),
-                         Zippin=pCarle, Soquete=resu$par[2],
-            No.Leslie=Leslie$est[1,1], No.DeLury=DeLury$est[1,1], No.Zippin= Carle$est[1], D.Soquete=resu$par[1]),
-            "SalidaSimu.txt", quote=F, col.names = F,
-                         row.names = F, sep="\t", append=T)
+            Carle=pCarle, Patch=resu$par[2], No.Leslie=Leslie$est[1,1], No.DeLury=DeLury$est[1,1], No.Carle= Carle$est[1], D.Patch=resu$par[1]),
+            "SalidaSimu.txt", quote=F, col.names = F, row.names = F, sep="\t", append=T)
 gc(reset=TRUE)
 }
 }
