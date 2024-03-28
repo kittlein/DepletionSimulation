@@ -1,8 +1,9 @@
 # DepletionSimulation
 code from "Effects of resource spatial distribution and tow overlap in the accuracy and precision of common methods used to estimate dredge efficiency for bottom trawl fisheries"
 
-```
+
 # loading libraries
+```
 library(Rcpp)
 sourceCpp("Landscape.cpp")
 library(raster)
@@ -10,8 +11,9 @@ library(rgeos)
 library(raptr)
 library(PBSmapping)
 library(FSA)
-
+```
 # Funciones para obtener la proporción de area barrida 1, 2, .... n veces
+```
 PropBarridosPolygon = function(Inter){
 if(length(Inter)==1)
     return(1)
@@ -27,9 +29,10 @@ R=raster::raster(res=c(0.1,0.1), ext=extent(Inter), crs=proj4string(Inter))
 Q<-fasterize::fasterize(sf=sf::st_as_sf(Inter), raster=R, field="Value",  fun='sum')
 return(table(Q[])/length(which(Q[]>0)))
 }
-
+```
 
 # Función para crear el paisaje
+```
 getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
                       proj=utm, ext=extP, n=1000000){
   RR=raster::raster(nrow=d, ncol=d, crs=utm, ext=extP)
@@ -44,8 +47,9 @@ getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
   individuals = as.EventData(individuals)
   return(individuals)
 }
-
+```
 # Función para generar los lances
+```
 genLances = function(proj=utm, extP=extP, sover=0.5){
   extP=extent(c(600000,601000,5000000,5001000))
   s=150
@@ -100,8 +104,9 @@ genLances = function(proj=utm, extP=extP, sover=0.5){
   PolyLances2$ID= 1:length(Lineas2)
   return(list(PolyLances, PolyLances2))
 }
-
+```
 # Función para simular la captura y barridos por lance
+```
 getCapturas=function(Lances, vieiras, Efi){
 pbLances = convert2PolySet(Lances[[1]], n=length(Lances[[1]]))
 Capturas = rep(NA, length(Lances[[1]]))
@@ -127,9 +132,10 @@ for(l in 1:length(Lances[[2]])){
   }
  return(list(Capturas, TablaP))
 }
-
+```
 
 # Funcion para estimar e con intensidad de barrido
+```
 Ajuste=function(par){
     d=par[1]
     e=par[2]
