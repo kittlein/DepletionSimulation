@@ -155,7 +155,7 @@ Ajuste=function(par){
   }
 ```
 # Loop for simulating "Nreps" depletion experiments with different spatial aggregation and tow overlap
-
+Output is saved to "SalidaSimu.txt"
 ```
 utm = "+proj=utm +zone=21 +south +datum=WGS84"
 extP=extent(c(600000, 601000, 5000000, 5001000))
