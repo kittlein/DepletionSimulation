@@ -19,7 +19,7 @@ https://doi.org/10.1890/0012-9658(2000)081[1629:POFLWS]2.0.CO;2
 ```
 sourceCpp("Landscape.cpp")
 ```
-# Funciones para obtener la proporción de area barrida 1, 2, .... n veces
+# Functions to obtain the proportion of swept area 1, 2, .... n times
 ```
 PropBarridosPolygon = function(Inter){
 if(length(Inter)==1)
@@ -38,7 +38,7 @@ return(table(Q[])/length(which(Q[]>0)))
 }
 ```
 
-# Función para crear el paisaje
+# Function to create the landscape
 ```
 getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
                       proj=utm, ext=extP, n=1000000){
@@ -55,7 +55,7 @@ getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
   return(individuals)
 }
 ```
-# Función para generar los lances
+# Function to generate survey hauls
 ```
 genLances = function(proj=utm, extP=extP, sover=0.5){
   extP=extent(c(600000,601000,5000000,5001000))
@@ -112,7 +112,7 @@ genLances = function(proj=utm, extP=extP, sover=0.5){
   return(list(PolyLances, PolyLances2))
 }
 ```
-# Función para simular la captura y barridos por lance
+# Function to get captures from survey hauls paths
 ```
 getCapturas=function(Lances, vieiras, Efi){
 pbLances = convert2PolySet(Lances[[1]], n=length(Lances[[1]]))
@@ -141,7 +141,7 @@ for(l in 1:length(Lances[[2]])){
 }
 ```
 
-# Funcion para estimar e con intensidad de barrido
+# Function to estimate efficiency for the patch model
 ```
 Ajuste=function(par){
     d=par[1]
