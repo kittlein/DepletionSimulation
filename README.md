@@ -57,7 +57,7 @@ getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
 ```
 # Function to generate survey hauls
 ```
-genLances = function(proj=utm, extP=extP, sover=0.5){
+genLances = function(proj=utm, extP=extP, sover=0.5, posError=5){
   extP=extent(c(600000,601000,5000000,5001000))
   s=150
   ssdd=sover
@@ -67,23 +67,21 @@ genLances = function(proj=utm, extP=extP, sover=0.5){
   posy1=NULL
   lal=700
   
-  for(barrido in 1:8){
-    posx0=c(posx0, rnorm(20,mean=seq(extP@xmin+s, extP@xmax-s,length=20), sd=ssdd))
-    posx1=c(posx1, rnorm(20,mean=seq(extP@xmin+s, extP@xmax-s,length=20), sd=ssdd))
-    # posy0=c(posy0, rnorm(40, mean=(extP@ymin+s)+((extP@ymax-s)-(extP@ymin+s))/2, sd=ssdd))
-    # posy1=c(posy1, posy0+rnorm(40,mean=lal*sign(runif(40,-1,1)), sd=ssdd))
-    posy0=c(posy0, rnorm(20, mean=extP@ymin+s, sd=ssdd))
-    posy1=c(posy1, posy0+rnorm(20,mean=lal, sd=ssdd))
+  for(barrido in 1:4){
+    posx0=c(posx0, rnorm(40,mean=seq(extP@xmin+s, extP@xmax-s,length=40), sd=ssdd))
+    posx1=c(posx1, rnorm(40,mean=seq(extP@xmin+s, extP@xmax-s,length=40), sd=ssdd))
+    posy0=c(posy0, rnorm(40, mean=extP@ymin+s, sd=ssdd))
+    posy1=c(posy1, posy0+rnorm(40,mean=lal, sd=ssdd))
   }
   
   j=1
   po = SpatialPoints(data.frame(xo=posx0[j], yo=posy0[j]))
-  r=runif(1,0, 5)
+  r=runif(1,0, posError)
   a=runif(1,-pi,pi)
   po2= SpatialPoints(data.frame(xo=posx0[j]+ r*cos(a), yo=posy0[j]+r*sin(a)))
   
   pf = SpatialPoints(data.frame(xf=posx1[j], yf=posy1[j]))
-  r=runif(1,0, 5)
+  r=runif(1, 0, posError)
   a=runif(1,-pi,pi)
   pf2 = SpatialPoints(data.frame(xf=posx1[j]+ r*cos(a), yf=posy1[j]+r*sin(a)))
   
@@ -92,7 +90,7 @@ genLances = function(proj=utm, extP=extP, sover=0.5){
   
   for(j in 2:length(posx0)){
     po = SpatialPoints(data.frame(xo=posx0[j], yo=posy0[j]))
-    r=runif(1,0, 5)
+    r=runif(1, 0, 5)
     a=runif(1,-pi,pi)
     po2= SpatialPoints(data.frame(xo=posx0[j]+ r*cos(a), yo=posy0[j]+r*sin(a)))
     
