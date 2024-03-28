@@ -1,2 +1,145 @@
 # DepletionSimulation
 code from "Effects of resource spatial distribution and tow overlap in the accuracy and precision of common methods used to estimate dredge efficiency for bottom trawl fisheries"
+
+```
+# loading libraries
+library(Rcpp)
+sourceCpp("Landscape.cpp")
+library(raster)
+library(rgeos)
+library(raptr)
+library(PBSmapping)
+library(FSA)
+
+# Funciones para obtener la proporción de area barrida 1, 2, .... n veces
+PropBarridosPolygon = function(Inter){
+if(length(Inter)==1)
+    return(1)
+else
+x <- union(Inter)
+od=order(unique(x$count))
+Areas=as.vector(by(area(x), x$count, sum))
+data.frame(Overlaps=unique(x$count), Area=Areas/sum(Areas))[od,]
+}
+
+PropBarridosRaster = function(Inter){
+R=raster::raster(res=c(0.1,0.1), ext=extent(Inter), crs=proj4string(Inter))
+Q<-fasterize::fasterize(sf=sf::st_as_sf(Inter), raster=R, field="Value",  fun='sum')
+return(table(Q[])/length(which(Q[]>0)))
+}
+
+
+# Función para crear el paisaje
+getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
+                      proj=utm, ext=extP, n=1000000){
+  RR=raster::raster(nrow=d, ncol=d, crs=utm, ext=extP)
+  L=CreateLandscape(xsize=d, ysize=d, p0=p0, q00=q00, iterates=niters, maxErr=maxErr)
+  R=matrix(L, d, d)
+  RR[]=R[]
+  indi=which(RR[]==1)
+  individuals = xyFromCell(RR,  sample(indi, size=n, replace=T))
+  individuals[] = individuals[] + rnorm(2*n, 0, 1)[]
+  individuals=cbind(1:nrow(individuals), individuals)
+  colnames(individuals)=c("EID", "X", "Y")
+  individuals = as.EventData(individuals)
+  return(individuals)
+}
+
+# Función para generar los lances
+genLances = function(proj=utm, extP=extP, sover=0.5){
+  extP=extent(c(600000,601000,5000000,5001000))
+  s=150
+  ssdd=sover
+  posx0=NULL
+  posx1=NULL
+  posy0=NULL
+  posy1=NULL
+  lal=700
+  
+  for(barrido in 1:8){
+    posx0=c(posx0, rnorm(20,mean=seq(extP@xmin+s, extP@xmax-s,length=20), sd=ssdd))
+    posx1=c(posx1, rnorm(20,mean=seq(extP@xmin+s, extP@xmax-s,length=20), sd=ssdd))
+    # posy0=c(posy0, rnorm(40, mean=(extP@ymin+s)+((extP@ymax-s)-(extP@ymin+s))/2, sd=ssdd))
+    # posy1=c(posy1, posy0+rnorm(40,mean=lal*sign(runif(40,-1,1)), sd=ssdd))
+    posy0=c(posy0, rnorm(20, mean=extP@ymin+s, sd=ssdd))
+    posy1=c(posy1, posy0+rnorm(20,mean=lal, sd=ssdd))
+  }
+  
+  j=1
+  po = SpatialPoints(data.frame(xo=posx0[j], yo=posy0[j]))
+  r=runif(1,0, 5)
+  a=runif(1,-pi,pi)
+  po2= SpatialPoints(data.frame(xo=posx0[j]+ r*cos(a), yo=posy0[j]+r*sin(a)))
+  
+  pf = SpatialPoints(data.frame(xf=posx1[j], yf=posy1[j]))
+  r=runif(1,0, 5)
+  a=runif(1,-pi,pi)
+  pf2 = SpatialPoints(data.frame(xf=posx1[j]+ r*cos(a), yf=posy1[j]+r*sin(a)))
+  
+  Lineas = as(rbind(po,pf), "SpatialLines")
+  Lineas2 = as(rbind(po2,pf2), "SpatialLines")
+  
+  for(j in 2:length(posx0)){
+    po = SpatialPoints(data.frame(xo=posx0[j], yo=posy0[j]))
+    r=runif(1,0, 5)
+    a=runif(1,-pi,pi)
+    po2= SpatialPoints(data.frame(xo=posx0[j]+ r*cos(a), yo=posy0[j]+r*sin(a)))
+    
+    pf = SpatialPoints(data.frame(xf=posx1[j], yf=posy1[j]))
+    r=runif(1,0, 5)
+    a=runif(1,-pi,pi)
+    pf2 = SpatialPoints(data.frame(xf=posx1[j]+ r*cos(a), yf=posy1[j]+r*sin(a)))
+    Lineas = rbind(Lineas, as(rbind(po,pf), "SpatialLines"))
+    Lineas2 = rbind(Lineas2, as(rbind(po2,pf2), "SpatialLines"))
+  }
+  proj4string(Lineas) = proj
+  proj4string(Lineas2) = proj
+  PolyLances = buffer(Lineas,  width=2.5/2, dissolve=F)
+  PolyLances2 = buffer(Lineas2,  width=2.5/2, dissolve=F)
+  PolyLances$ID= 1:length(Lineas)
+  PolyLances2$ID= 1:length(Lineas2)
+  return(list(PolyLances, PolyLances2))
+}
+
+# Función para simular la captura y barridos por lance
+getCapturas=function(Lances, vieiras, Efi){
+pbLances = convert2PolySet(Lances[[1]], n=length(Lances[[1]]))
+Capturas = rep(NA, length(Lances[[1]]))
+TablaR=list()
+
+for(l in 1:length(Lances[[2]])){
+    Inter = raster::intersect(Lances[[2]][l,], Lances[[2]][1:l,])
+    Inter$Value=rep(1, length(Inter))
+    TablaR[[l]] = PropBarridosRaster(Inter)
+    vie=findPolys(vieiras, pbLances[pbLances$PID==l,])
+    CR=rbinom(n=length(vie$EID), Efi, size=1)
+    CF=vie$EID[which(CR==1)]
+    Capturas[l]=length(CF)
+    
+    if(length(match(CF, vieiras$EID))>0)
+      vieiras=vieiras[-match(CF, vieiras$EID),]
+  }
+ TablaP=matrix(0, length(TablaR), length(TablaR))
+  
+  for(k in 1:length(TablaR)){
+    cols=as.numeric(names(TablaR[[k]]))
+    TablaP[k,cols]=TablaR[[k]]
+  }
+ return(list(Capturas, TablaP))
+}
+
+
+# Funcion para estimar e con intensidad de barrido
+Ajuste=function(par){
+    d=par[1]
+    e=par[2]
+    espe=rep(NA, length(Capturas))
+    
+    for(j in 1:length(Capturas))
+      espe[j]= e*sum(a[j]*d*Tabla[j,]*(1-e)^(expo))
+    
+    s=sqrt(sum((log1p(Capturas)-log1p(espe))^2)/(length(Capturas)-1))
+    SLL=-sum(dnorm(x=log1p(Capturas), mean=log1p(espe), sd=s, log = T))
+    return(SLL)
+  }
+```
