@@ -13,7 +13,7 @@ library(FSA)
 ```
 
 # Compile C++ code to create a virtual landscape with varying degrees of spatial aggregation of suitable sites
-Code modified from Hiebeler (2000) XXXXX
+Code modified from Hiebeler (2000) \url{https://doi.org/10.1890/0012-9658(2000)081[1629:POFLWS]2.0.CO;2}
 
 ```
 sourceCpp("Landscape.cpp")
