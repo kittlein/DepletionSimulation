@@ -1,6 +1,9 @@
 # DepletionSimulation
 code from "Effects of resource spatial distribution and tow overlap in the accuracy and precision of common methods used to estimate dredge efficiency for bottom trawl fisheries"
 
+# Visualization of the depletion experiment
+This animation shows how the sequence of tows with a dredge efficiency of 0.6 depletes the scallop bed and the associated relationship between the capture of each survey haul and the cumulative capture of the experiment.
+![](animation.gif)
 
 # loading libraries
 ```
@@ -213,3 +216,4 @@ gc(reset=TRUE)
 }
 }
 ```
+
