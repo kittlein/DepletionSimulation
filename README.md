@@ -5,12 +5,18 @@ code from "Effects of resource spatial distribution and tow overlap in the accur
 # loading libraries
 ```
 library(Rcpp)
-sourceCpp("Landscape.cpp")
 library(raster)
 library(rgeos)
 library(raptr)
 library(PBSmapping)
 library(FSA)
+```
+
+# Compile C++ code to create a virtual landscape with varying degrees of spatial aggregation of suitable sites
+Code modified from Hiebeler (2000) XXXXX
+
+```
+sourceCpp("Landscape.cpp")
 ```
 # Funciones para obtener la proporción de area barrida 1, 2, .... n veces
 ```
@@ -148,4 +154,65 @@ Ajuste=function(par){
     SLL=-sum(dnorm(x=log1p(Capturas), mean=log1p(espe), sd=s, log = T))
     return(SLL)
   }
+```
+# Loop for simulating "Nreps" depletion experiments with different spatial aggregation and tow overlap
+
+```
+utm = "+proj=utm +zone=21 +south +datum=WGS84"
+extP=extent(c(600000, 601000, 5000000, 5001000))
+
+sal=data.frame(q00=NA, sover=NA, rep=NA, Par=NA, Leslie=NA, DeLury=NA, Zippin=NA, Soquete=NA,
+               No.Leslie=NA, No.DeLury=NA, No.Zippin= NA, D.Soquete=NA)
+sal=sal[-1,]
+write.table(sal, "SalidaSimu.txt", quote=F, col.names = T, row.names = F, sep="\t", append=F)
+
+Nreps=100
+
+for(q00 in c(0.05, 0.3, 0.60, 0.95)){
+  for(sover in c(30, 2, 0.5)){
+    for(rep in 1:Nreps){
+
+Efi=runif(1,0.2,0.8)
+Lances=genLances(sover=sover)
+vieiras=getPaisaje(n=4000000, q00=q00)
+CapBarri=getCapturas(Lances, vieiras, Efi)
+Capturas=CapBarri[[1]]
+Tabla=CapBarri[[2]]
+
+Esfuerzo = gLength(Lances[[1]], byid = TRUE)/2
+Esfuerzo=Esfuerzo*60/(4*1.852)/1000
+Leslie=depletion(catch=Capturas, effort=Esfuerzo, method="Leslie")
+
+AA=area(aggregate(Lances[[1]]))
+a = area(Lances[[1]])
+q=Leslie$est['q',1]
+vt=1-exp(-q*Esfuerzo)
+el=vt*AA/a
+  
+DeLury=depletion(catch=Capturas+1, effort=Esfuerzo, method="DeLury")
+qb=DeLury$est['q',1]
+vt=1-exp(-qb*Esfuerzo)
+ed=vt*AA/a
+  
+barridos=rep(1:4, each=40)
+Catch=as.vector(by(Capturas, barridos, sum))
+Carle=removal(Catch, method="CarleStrub", alpha=1, beta=1)
+pCarle=Carle$est['p']
+
+expo=0:(length(Capturas)-1)
+lo=c(0.1,0.0001)
+up=c(10, 0.9999)
+  
+start=runif(2, lo, up)
+resu=optim(start, Ajuste, method="L-BFGS-B", lower=lo, upper=up, control=list(maxit=30000))
+  
+write.table(data.frame(q00=q00, sover=sover, rep=rep, Par=Efi, Leslie=median(el), DeLury=median(ed),
+                         Zippin=pCarle, Soquete=resu$par[2],
+            No.Leslie=Leslie$est[1,1], No.DeLury=DeLury$est[1,1], No.Zippin= Carle$est[1], D.Soquete=resu$par[1]),
+            "SalidaSimu.txt", quote=F, col.names = F,
+                         row.names = F, sep="\t", append=T)
+gc(reset=TRUE)
+}
+}
+}
 ```
