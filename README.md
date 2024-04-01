@@ -24,16 +24,6 @@ sourceCpp("Landscape.cpp")
 ```
 # Functions to obtain the proportion of swept area 1, 2, .... n times
 ```
-PropBarridosPolygon = function(Inter){
-if(length(Inter)==1)
-    return(1)
-else
-x <- union(Inter)
-od=order(unique(x$count))
-Areas=as.vector(by(area(x), x$count, sum))
-data.frame(Overlaps=unique(x$count), Area=Areas/sum(Areas))[od,]
-}
-
 PropBarridosRaster = function(Inter){
 R=raster::raster(res=c(0.1,0.1), ext=extent(Inter), crs=proj4string(Inter))
 Q<-fasterize::fasterize(sf=sf::st_as_sf(Inter), raster=R, field="Value",  fun='sum')
