@@ -61,20 +61,18 @@ getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
 # Function to generate survey hauls
 ```
 genLances = function(proj=utm, extP=extP, sover=0.5, posError=5){
-  extP=extent(c(600000,601000,5000000,5001000))
-  s=150
-  ssdd=sover
+  s=150 # vertical gap to the border of the box
   posx0=NULL
   posx1=NULL
   posy0=NULL
   posy1=NULL
-  lal=700
+  lal=700 # mean length of tows
   
   for(barrido in 1:4){
-    posx0=c(posx0, rnorm(40,mean=seq(extP@xmin+s, extP@xmax-s,length=40), sd=ssdd))
-    posx1=c(posx1, rnorm(40,mean=seq(extP@xmin+s, extP@xmax-s,length=40), sd=ssdd))
-    posy0=c(posy0, rnorm(40, mean=extP@ymin+s, sd=ssdd))
-    posy1=c(posy1, posy0+rnorm(40,mean=lal, sd=ssdd))
+    posx0=c(posx0, rnorm(40,mean=seq(extP@xmin+s, extP@xmax-s,length=40), sd=sover))
+    posx1=c(posx1, rnorm(40,mean=seq(extP@xmin+s, extP@xmax-s,length=40), sd=sover))
+    posy0=c(posy0, rnorm(40, mean= extP@ymin+s, sd=sover))
+    posy1=c(posy1, posy0+rnorm(40,mean=lal, sd=sover))
   }
   
   j=1
@@ -93,12 +91,12 @@ genLances = function(proj=utm, extP=extP, sover=0.5, posError=5){
   
   for(j in 2:length(posx0)){
     po = SpatialPoints(data.frame(xo=posx0[j], yo=posy0[j]))
-    r=runif(1, 0, 5)
+    r=runif(1, 0, posError)
     a=runif(1,-pi,pi)
     po2= SpatialPoints(data.frame(xo=posx0[j]+ r*cos(a), yo=posy0[j]+r*sin(a)))
     
     pf = SpatialPoints(data.frame(xf=posx1[j], yf=posy1[j]))
-    r=runif(1,0, 5)
+    r=runif(1, 0, posError)
     a=runif(1,-pi,pi)
     pf2 = SpatialPoints(data.frame(xf=posx1[j]+ r*cos(a), yf=posy1[j]+r*sin(a)))
     Lineas = rbind(Lineas, as(rbind(po,pf), "SpatialLines"))
@@ -175,7 +173,7 @@ for(q00 in c(0.05, 0.3, 0.60, 0.95)){
     for(rep in 1:Nreps){
 
 Efi=runif(1,0.2,0.8)
-Lances=genLances(sover=sover)
+Lances=genLances(ext=extP, sover=2, posError=0)
 vieiras=getPaisaje(n=4000000, q00=q00)
 CapBarri=getCapturas(Lances, vieiras, Efi)
 Capturas=CapBarri[[1]]
@@ -188,13 +186,11 @@ Leslie=depletion(catch=Capturas, effort=Esfuerzo, method="Leslie")
 AA=area(aggregate(Lances[[1]]))
 a = area(Lances[[1]])
 q=Leslie$est['q',1]
-vt=1-exp(-q*Esfuerzo)
-el=vt*AA/a
+el=q*mean(Esfuerzo)*AA/mean(a)
   
 DeLury=depletion(catch=Capturas+1, effort=Esfuerzo, method="DeLury")
 qb=DeLury$est['q',1]
-vt=1-exp(-qb*Esfuerzo)
-ed=vt*AA/a
+ed=qb*mean(Esfuerzo)*AA/mean(a)
   
 barridos=rep(1:4, each=40)
 Catch=as.vector(by(Capturas, barridos, sum))
@@ -216,4 +212,4 @@ gc(reset=TRUE)
 }
 }
 ```
-
+A full script to explore the behavior of different methods for varying scallop clustering, tow overlap and positional error is available in the file "Simulations.R"
