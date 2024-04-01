@@ -9,27 +9,14 @@ library(Rcpp)
 # compile C++ code to generate virtual landscapes
 sourceCpp("Landscape.cpp")
 
-# Funciones para obtener la proporción de area barrida 1, 2, .... n veces
-
-PropBarridosPolygon = function(Inter){
-if(length(Inter)==1)
-    return(1)
-else
-x <- union(Inter)
-od=order(unique(x$count))
-Areas=as.vector(by(area(x), x$count, sum))
-data.frame(Overlaps=unique(x$count), Area=Areas/sum(Areas))[od,]
-}
-
+# Function to get for each tow the proportion of its path previously swept 1, 2, .... n times.
 PropBarridosRaster = function(Inter){
 R=raster::raster(res=c(0.1,0.1), ext=extent(Inter), crs=proj4string(Inter))
 Q<-fasterize::fasterize(sf=sf::st_as_sf(Inter), raster=R, field="Value",  fun='sum')
 return(table(Q[])/length(which(Q[]>0)))
 }
 
-
 # Function to generate spatial arrangements of scallops
-
 getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
                       proj=utm, ext=extP, n=1000000){
   RR=raster::raster(nrow=d, ncol=d, crs=utm, ext=extP)
@@ -46,7 +33,6 @@ getPaisaje = function(d=300, p0=0.3, q00=0.3, niters=10000000, maxErr= 0.000001,
 }
 
 # Function to generate survey tows
-
 genLances = function(proj=utm, extP=extP, sover=0.5, posError=5){
   s=150 # vertical gap to the border of the box
   posx0=NULL
@@ -99,7 +85,6 @@ genLances = function(proj=utm, extP=extP, sover=0.5, posError=5){
 }
 
 # Function to get captures and proportional intersections between tows
-
 getCapturas=function(Lances, vieiras, Efi){
 pbLances = convert2PolySet(Lances[[1]], n=length(Lances[[1]]))
 Capturas = rep(NA, length(Lances[[1]]))
@@ -126,7 +111,6 @@ for(l in 1:length(Lances[[1]])){
  return(list(Capturas, TablaP))
 }
 
-
 # Function to estimate efficiency for the patch model
 Ajuste=function(par){
     d=par[1]
@@ -143,10 +127,9 @@ Ajuste=function(par){
 
 
 # Run simulations
-
 utm = "+proj=utm +zone=21 +south +datum=WGS84"
 extP=extent(c(600000, 601000, 5000000, 5001000))
-
+# output data frame
 sal=data.frame(q00=NA, posError=NA, sover=NA, rep=NA, Par=NA, Leslie=NA, DeLury=NA, Carle=NA, Soquete=NA,
                No.Leslie=NA, No.DeLury=NA, No.Carle= NA, D.Soquete=NA)
 sal=sal[-1,]
@@ -194,13 +177,11 @@ pCarle=Carle$est['p']
 
 start=runif(2, lo, up)
 resu=optim(start, Ajuste, method="L-BFGS-B", lower=lo, upper=up, control=list(maxit=30000))
-  
+# write data frame to output file 
 write.table(data.frame(q00=q00, posError=posError, sover=sover, rep=rep, Par=Efi, Leslie= el, DeLury= ed,
-                         Carle=pCarle, Soquete=resu$par[2],
-            No.Leslie=Leslie$est[1,1], No.DeLury=DeLury$est[1,1], No.Carle= Carle$est[1], D.Soquete=resu$par[1]),
-            "SalidaSimu.txt", quote=F, col.names = F,
+                        Carle=pCarle, Soquete=resu$par[2], No.Leslie=Leslie$est[1,1], No.DeLury=DeLury$est[1,1], 
+                        No.Carle= Carle$est[1], D.Soquete=resu$par[1]), "SalidaSimu.txt", quote=F, col.names = F,
                          row.names = F, sep="\t", append=T)
-
 }
 }
 }
