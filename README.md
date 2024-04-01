@@ -212,4 +212,4 @@ gc(reset=TRUE)
 }
 }
 ```
-A full script to explore the behavior of different methods for varying scallop clustering, tow overlap and positional error is available in the file "Simulations.R"
+A full script to explore the behavior of different methods for varying scallop clustering, tow overlap and positional error is available in the file ![Simulations.R](Simulations.R)
