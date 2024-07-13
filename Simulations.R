@@ -84,7 +84,7 @@ genLances = function(proj=utm, extP=extP, sover=0.5, posError=5){
   ##############################################################################
   # il = sample(1:length(Lineas), size=length(Lineas))
   # PolyLances=PolyLances[il,]
-  # PolyLances2=PolyLances2[il]
+  # PolyLances2=PolyLances2[il,]
   PolyLances$ID= 1:length(Lineas)
   PolyLances2$ID= 1:length(Lineas2)
   return(list(PolyLances, PolyLances2))
