@@ -156,6 +156,23 @@ Output is saved to "SalidaSimu.txt"
 ```
 utm = "+proj=utm +zone=21 +south +datum=WGS84"
 extP=extent(c(600000, 601000, 5000000, 5001000))
+# output data frame
+sal=data.frame(q00=NA, posError=NA, sover=NA, rep=NA, Par=NA, Leslie=NA, DeLury=NA,
+               Removal=NA, Patch=NA, D.Leslie=NA, D.DeLury=NA, D.Removal=NA, 
+               D.Patch=NA, E=NA, A=NA, a=NA, Leslie4=NA, DeLury4=NA,
+               D.Leslie4=NA, D.DeLury4=NA)
+sal=sal[-1,]
+write.table(sal, "SalidaSimu.txt", quote=F, col.names = T, row.names = F, sep="\t", append=F)
+
+barridos=rep(1:4, each=40)
+expo=0:(160-1)
+lo=c(0.1,0.0001)
+up=c(10, 0.9999)
+
+Nreps=1000
+
+utm = "+proj=utm +zone=21 +south +datum=WGS84"
+extP=extent(c(600000, 601000, 5000000, 5001000))
 
 sal=data.frame(q00=NA, sover=NA, rep=NA, Par=NA, Leslie=NA, DeLury=NA, Carle=NA, Soquete=NA,
                No.Leslie=NA, No.DeLury=NA, No.Carle= NA, D.Patch=NA)
@@ -170,18 +187,19 @@ for(q00 in c(0.05, 0.3, 0.60, 0.95)){
     for(rep in 1:Nreps){
 
 Efi=runif(1,0.2,0.8)
-Lances=genLances(ext=extP, sover=2, posError=0)
-vieiras=getPaisaje(n=4000000, q00=q00)
+
+Lances=genLances(ext=extP, sover=sover, posError=posError)
+vieiras=getPaisaje(n=4000000, q00=0.95)
 CapBarri=getCapturas(Lances, vieiras, Efi)
 Capturas=CapBarri[[1]]
 Tabla=CapBarri[[2]]
 
-Esfuerzo = gLength(Lances[[1]], byid = TRUE)/2
+Esfuerzo = gLength(Lances[[2]], byid = TRUE)/2
 Esfuerzo=Esfuerzo*60/(4*1.852)/1000
 Leslie=depletion(catch=Capturas, effort=Esfuerzo, method="Leslie")
 
-AA=area(aggregate(Lances[[1]]))
-a = area(Lances[[1]])
+AA=area(aggregate(Lances[[2]]))
+a = area(Lances[[2]])
 q=Leslie$est['q',1]
 el=q*mean(Esfuerzo)*AA/mean(a)
   
@@ -189,21 +207,32 @@ DeLury=depletion(catch=Capturas+1, effort=Esfuerzo, method="DeLury")
 qb=DeLury$est['q',1]
 ed=qb*mean(Esfuerzo)*AA/mean(a)
   
-barridos=rep(1:4, each=40)
 Catch=as.vector(by(Capturas, barridos, sum))
+Effort=as.vector(by(Esfuerzo, barridos, sum))
+a4=as.vector(by(a, barridos, sum))
+Leslie4=depletion(catch=Catch, effort=Effort, method="Leslie")
+DeLury4=depletion(catch=Catch, effort=Effort, method="DeLury")
+
+el4=Leslie4$est['q',1]*mean(Effort)*AA/mean(a4)
+ed4=DeLury4$est['q',1]*mean(Effort)*AA/mean(a4)
+Dl4=Leslie4$est['No', 1]/AA
+Dd4=DeLury4$est['No', 1]/AA
+
+
 Carle=removal(Catch, method="CarleStrub", alpha=1, beta=1)
 pCarle=Carle$est['p']
 
-expo=0:(length(Capturas)-1)
-lo=c(0.1,0.0001)
-up=c(10, 0.9999)
-  
-start=runif(2, lo, up)
+start=c(Efi, 4)
+
 resu=optim(start, Ajuste, method="L-BFGS-B", lower=lo, upper=up, control=list(maxit=30000))
-  
-write.table(data.frame(q00=q00, sover=sover, rep=rep, Par=Efi, Leslie=median(el), DeLury=median(ed),
-            Carle=pCarle, Patch=resu$par[2], No.Leslie=Leslie$est[1,1], No.DeLury=DeLury$est[1,1], No.Carle= Carle$est[1], D.Patch=resu$par[1]),
-            "SalidaSimu.txt", quote=F, col.names = F, row.names = F, sep="\t", append=T)
+
+write.table(data.frame(q00=q00, posError=posError, sover=sover, rep=rep, Par=Efi, 
+                       Leslie= el, DeLury= ed, Carle=pCarle, Patch=resu$par[2], 
+                       D.Leslie=Leslie$est[1,1]/AA, D.DeLury=DeLury$est[1,1]/AA, 
+                       D.Removal= Carle$est[1]/AA, D.Patch=resu$par[1], 
+                       E=mean(Esfuerzo), A=AA, a=mean(a), Leslie4=el4, DeLury4=ed4,
+                       D.Leslie4=Dl4, D.DeLury4=Dd4), "SalidaSimu.txt", quote=F, col.names = F,
+                       row.names = F, sep="\t", append=T)
 gc(reset=TRUE)
 }
 }
