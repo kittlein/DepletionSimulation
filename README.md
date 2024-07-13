@@ -96,6 +96,12 @@ genLances = function(proj=utm, extP=extP, sover=0.5, posError=5){
   proj4string(Lineas2) = proj
   PolyLances = buffer(Lineas,  width=2.5/2, dissolve=F)
   PolyLances2 = buffer(Lineas2,  width=2.5/2, dissolve=F)
+  ##############################################################################
+  # shuffle tows to break sequence
+  ##############################################################################
+  # il = sample(1:length(Lineas), size=length(Lineas))
+  # PolyLances=PolyLances[il,]
+  # PolyLances2=PolyLances2[il]
   PolyLances$ID= 1:length(Lineas)
   PolyLances2$ID= 1:length(Lineas2)
   return(list(PolyLances, PolyLances2))
