@@ -164,6 +164,7 @@ write.table(sal, "SalidaSimu.txt", quote=F, col.names = T, row.names = F, sep="\
 
 Nreps=100
 
+for(posError in c(0, 5, 10, 20)){
 for(q00 in c(0.05, 0.3, 0.60, 0.95)){
   for(sover in c(30, 2, 0.5)){
     for(rep in 1:Nreps){
@@ -204,6 +205,7 @@ write.table(data.frame(q00=q00, sover=sover, rep=rep, Par=Efi, Leslie=median(el)
             Carle=pCarle, Patch=resu$par[2], No.Leslie=Leslie$est[1,1], No.DeLury=DeLury$est[1,1], No.Carle= Carle$est[1], D.Patch=resu$par[1]),
             "SalidaSimu.txt", quote=F, col.names = F, row.names = F, sep="\t", append=T)
 gc(reset=TRUE)
+}
 }
 }
 }
